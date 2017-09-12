@@ -19,31 +19,34 @@ def add_to_bi_table(token_arr):
         else:
             bi_frequency_table[bigram] = 1
 
-# Returns the conditional probability (w_i | w_iMinus1)
+# Returns the conditional probability (w_i | w_iMinus1), without applying smoothing
 def conditional_prob_unsmoothed(w_i, w_iMinus1):
     bigram = w_iMinus1 + " " + w_i
     if(bigram not in bi_frequency_table):
         return 0
-    prob_wi_AND_wiMinus1 = bi_frequency_table[bigram] / bi_frequencies_sum
+    freq_wi_AND_wiMinus1 = bi_frequency_table[bigram]
     freq_w_iMinus1 = 0 # initialize
     for k,v in bi_frequency_table.items(): # count how many times w_iMinus1 is first part of a bigram
         if k.split()[0] == w_iMinus1:
             freq_w_iMinus1 += v
-    prob_wiMinus1 = freq_w_iMinus1 / bi_frequencies_sum
-    return (prob_wi_AND_wiMinus1 / prob_wiMinus1)
+    return (freq_wi_AND_wiMinus1 / freq_w_iMinus1)
 
+# Returns the conditional probability (w_i | w_iMinus1), applying add-one smoothing
 def conditional_prob_smoothed(w_i, w_iMinus1):
     bigram = w_iMinus1 + " " + w_i
     if(bigram not in bi_frequency_table):
-        return 0
-    prob_wi_AND_wiMinus1 = bi_frequency_table[bigram] / bi_frequencies_sum
+        bigram_freq = 1
+    else:
+        bigram_freq = bi_frequency_table[bigram] + 1
+
     freq_w_iMinus1 = 0 # initialize
+    vocab_size = 0 # initialize the number of times (w_i-1 | * ) is seen in bigram table
     for k,v in bi_frequency_table.items(): # count how many times w_iMinus1 is first part of a bigram
         if k.split()[0] == w_iMinus1:
+            vocab_size += 1
             freq_w_iMinus1 += v
-    prob_wiMinus1 = freq_w_iMinus1 / bi_frequencies_sum
-    return (prob_wi_AND_wiMinus1 / prob_wiMinus1)
-    
+    return (bigram_freq / (freq_w_iMinus1 + vocab_size))
+
 # Calculates and prints the log-probability of a given sentence using the unigram language model
 def print_sentence_prob_unigram(sentence, uni_frequencies_sum):
     token_arr = sentence.lower().split()
@@ -118,5 +121,5 @@ for sentence in test_file:
     print("S = ",sentence)
     print_sentence_prob_unigram(sentence, uni_frequencies_sum)
     print_sentence_prob_bigram_unsmoothed(sentence, bi_frequencies_sum)
-    #print_sentence_prob_bigram_smoothed(sentence, bi_frequencies_sum)
+    print_sentence_prob_bigram_smoothed(sentence, bi_frequencies_sum)
     print()
