@@ -20,18 +20,20 @@ def add_to_bi_table(token_arr):
             bi_frequency_table[bigram] = 1
 
 # Returns the conditional probability (w_i | w_iMinus1), without applying smoothing
+# P = freq(w_i-1, w_i) / freq(w_i-1)
 def conditional_prob_unsmoothed(w_i, w_iMinus1):
     bigram = w_iMinus1 + " " + w_i
     if(bigram not in bi_frequency_table):
         return 0
-    freq_wi_AND_wiMinus1 = bi_frequency_table[bigram]
-    freq_w_iMinus1 = 0 # initialize
+    bigram_freq = bi_frequency_table[bigram]
+    w_iMinus1_freq = 0 # initialize
     for k,v in bi_frequency_table.items(): # count how many times w_iMinus1 is first part of a bigram
         if k.split()[0] == w_iMinus1:
-            freq_w_iMinus1 += v
-    return (freq_wi_AND_wiMinus1 / freq_w_iMinus1)
+            w_iMinus1_freq += v
+    return (bigram_freq / w_iMinus1_freq)
 
 # Returns the conditional probability (w_i | w_iMinus1), applying add-one smoothing
+# P = (freq(w_i-1, w_i) + 1 / freq(w_i-1) + V)
 def conditional_prob_smoothed(w_i, w_iMinus1):
     bigram = w_iMinus1 + " " + w_i
     if(bigram not in bi_frequency_table):
@@ -39,13 +41,12 @@ def conditional_prob_smoothed(w_i, w_iMinus1):
     else:
         bigram_freq = bi_frequency_table[bigram] + 1
 
-    freq_w_iMinus1 = 0 # initialize
-    vocab_size = 0 # initialize the number of times (w_i-1 | * ) is seen in bigram table
+    w_iMinus1_freq = 0 # initialize
     for k,v in bi_frequency_table.items(): # count how many times w_iMinus1 is first part of a bigram
         if k.split()[0] == w_iMinus1:
-            vocab_size += 1
-            freq_w_iMinus1 += v
-    return (bigram_freq / (freq_w_iMinus1 + vocab_size))
+            w_iMinus1_freq += v
+    vocab_size = len(uni_frequency_table) # the V term
+    return (bigram_freq / (w_iMinus1_freq + vocab_size + 1))
 
 # Calculates and prints the log-probability of a given sentence using the unigram language model
 def print_sentence_prob_unigram(sentence, uni_frequencies_sum):
